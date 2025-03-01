@@ -1,1 +1,4 @@
-# please edit this file
+.vscode/
+.smart_palletizer/
+*.egg-info/
+*.egg/
