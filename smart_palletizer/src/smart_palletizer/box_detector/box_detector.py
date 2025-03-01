@@ -91,13 +91,6 @@ class BoxDetector:
             plt.imshow(cv2.cvtColor(color_image, cv2.COLOR_BGR2RGB))
             plt.contour(box, colors="r")
 
-        # plt.show()
-
-        # plt.imshow(cv2.cvtColor(self.color_image, cv2.COLOR_BGR2RGB))
-        # ax = plt.gca()
-        # for box in self.detected_boxes:
-        #    show_mask(box, ax=ax, random_color=True)
-
         plt.axis("off")
         plt.show()
 
@@ -117,15 +110,6 @@ class BoxDetector:
                     break
 
             if is_contained:
-                continue
-
-            # filter by shape (assumes box sides to be parallel to the image - should align the principal box axes before checking to make it more general)
-            contours, _ = cv2.findContours(mask.astype(np.uint8), cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
-            x, y, w, h = cv2.boundingRect(contours[0])
-            rect_area = w * h
-            contour_area = cv2.contourArea(contours[0])
-            area_difference = abs(rect_area - contour_area) / rect_area
-            if area_difference > 0.2:
                 continue
 
             filtered_masks.append(mask)

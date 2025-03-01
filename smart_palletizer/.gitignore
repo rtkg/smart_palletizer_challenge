@@ -1,7 +1,7 @@
 # Ignore Visual Studio Code settings directory
 .vscode/
 
-# Ignore smart_palletizer directory
+# Ignore venv
 .smart_palletizer/
 
 # Ignore egg-info directories
