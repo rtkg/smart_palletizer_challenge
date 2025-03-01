@@ -1,4 +1,12 @@
+# Ignore Visual Studio Code settings directory
 .vscode/
+
+# Ignore smart_palletizer directory
 .smart_palletizer/
+
+# Ignore egg-info directories
 *.egg-info/
 *.egg/
+
+# Ignore __pycache__ directories
+__pycache__/

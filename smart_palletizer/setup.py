@@ -1,3 +1,7 @@
+"""
+Setup configuration for the smart_palletizer package.
+"""
+
 from setuptools import setup, find_packages
 
 # python dependencies listed here will be automatically installed with the package
@@ -25,9 +29,7 @@ setup(
     author_email="krug.r1@gmail.com",
     maintainer="Robert Krug",
     maintainer_email="krug.r1@gmail.com",
-    description=(
-        "This package does: palletized box detection and pose estimation."
-    ),
+    description=("This package does: palletized box detection and pose estimation."),
     long_description=long_description,
     long_description_content_type="text/markdown",
     license="",
