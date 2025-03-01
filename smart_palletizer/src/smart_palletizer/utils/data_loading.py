@@ -3,6 +3,49 @@ import open3d as o3d
 import numpy as np
 import json
 import os
+import pickle
+
+
+class PalletizerData:
+    def __init__(self, config, object: str):
+        self.depth_scale = config["depth_scale"]
+        current_file_path = os.path.abspath(__file__)
+        data_path = os.path.join(os.path.dirname(current_file_path), "../../../data/", object)
+
+        color_image_path = os.path.join(data_path, "color_image.png")
+        depth_image_path = os.path.join(data_path, "raw_depth.png")
+        intrinsics_path = os.path.join(data_path, "intrinsics.json")
+        extrinsics_path = os.path.join(data_path, "cam2root.json")
+        box_mesh_path = os.path.join(data_path, object + "_mesh.ply")
+        detected_boxes_path = os.path.join(data_path, "detected_boxes.pkl")
+        if not os.path.exists(detected_boxes_path):
+            raise FileNotFoundError(f"Pickle file not found: {detected_boxes_path}")
+        with open(detected_boxes_path, "rb") as f:
+            self.detected_boxes = pickle.load(f)
+
+        self.color_image = load_image(color_image_path)
+        self.depth_image = load_image(depth_image_path, is_depth_image=True)
+
+        color_raw = o3d.geometry.Image(self.color_image)
+        depth_raw = o3d.geometry.Image(self.depth_image.astype(np.float32) * self.depth_scale)
+        self.rgbd_image = o3d.geometry.RGBDImage.create_from_color_and_depth(
+            color_raw, depth_raw, depth_scale=1, convert_rgb_to_intensity=False
+        )
+
+        self.width, self.height, self.intrinsics, self.extrinsics = load_camera_parameters(
+            intrinsics_path, extrinsics_path
+        )
+        self.box_mesh = load_mesh(box_mesh_path)
+        self.data_path = data_path
+
+        self.object = object
+
+        if object == "small_box":
+            self.box_dimensions = config["small_box_dimensions"]  # Use config value
+        elif object == "medium_box":
+            self.box_dimensions = config["medium_box_dimensions"]  # Use config value
+        else:
+            raise ValueError("Invalid object type. Supported objects are 'small_box' and 'medium_box'.")
 
 
 def load_image(image_path, is_depth_image: bool = False) -> np.ndarray:
@@ -31,30 +74,6 @@ def load_image(image_path, is_depth_image: bool = False) -> np.ndarray:
         raise FileNotFoundError(f"Image file not found or could not be loaded: {image_path}")
 
     return image
-
-
-def visualize_image(image: np.ndarray, is_depth_image: bool = False) -> None:
-    """
-    Visualizes an image using OpenCV.
-
-    Parameters:
-    image (np.ndarray): The image to be visualized. It can be a regular image or a depth image.
-    is_depth_image (bool): A flag indicating whether the image is a depth image. Default is False.
-
-    Returns:
-    None
-    """
-
-    if is_depth_image:
-        # Apply a color map to the depth image for better visualization
-        depth_image = cv2.normalize(image, None, 0, 255, cv2.NORM_MINMAX)
-        depth_image = depth_image.astype(np.uint8)
-        cv2.imshow("Depth Image", depth_image)
-    else:
-        cv2.imshow("Image", image)
-
-    cv2.waitKey(0)
-    cv2.destroyAllWindows()
 
 
 def load_camera_parameters(intrinsics_path, extrinsics_path):
@@ -94,7 +113,7 @@ def load_camera_parameters(intrinsics_path, extrinsics_path):
 
 def load_mesh(mesh_path: str) -> None:
     """
-    Load and visualize a PLY file using Open3D.
+    Load a PLY file using Open3D.
 
     Args:
         ply_file_path (str): Path to the PLY file.
@@ -108,6 +127,5 @@ def load_mesh(mesh_path: str) -> None:
     # Load the PLY file
     mesh = o3d.io.read_triangle_mesh(mesh_path)
     mesh.compute_vertex_normals()
-    o3d.visualization.draw_geometries([mesh])
 
     return mesh

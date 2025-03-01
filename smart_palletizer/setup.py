@@ -17,6 +17,8 @@ install_deps = [
     "jinja2",
     "matplotlib",
     "pillow>=11.1.0",
+    "omegaconf",
+    "pyyaml",
 ]
 
 with open("README.md", "r") as fh:

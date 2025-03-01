@@ -1,0 +1,3 @@
+depth_scale: 0.001  # assuming depth measurements to be given in [mm]
+small_box_dimensions: [0.255, 0.155, 0.100]
+medium_box_dimensions: [0.340, 0.250, 0.095]
