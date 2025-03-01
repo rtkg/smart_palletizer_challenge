@@ -36,7 +36,7 @@ if __name__ == "__main__":
     current_file_path = os.path.abspath(__file__)
     default_file_path = os.path.join(os.path.dirname(current_file_path), "../../data/medium_box/medium_box_0_raw.ply")
     default_load_path = os.path.join(
-        os.path.dirname(current_file_path), "../../data/medium_box/medium_box_0_raw_cleaned.ply"
+        os.path.dirname(current_file_path), "../../data/medium_box/medium_box_0_cleaned.ply"
     )
 
     parser = argparse.ArgumentParser(description="Clean a point cloud and save the result.")
