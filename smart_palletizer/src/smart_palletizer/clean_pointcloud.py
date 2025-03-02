@@ -1,9 +1,10 @@
 import open3d as o3d
 import argparse
 import os
+from typing import Optional
 
 
-def clean_point_cloud(input_path, output_path, visualize=False):
+def clean_point_cloud(input_path: str, output_path: str, visualize: bool = False) -> None:
     """
     Clean a point cloud by removing statistical and radius outliers.
 
@@ -11,6 +12,9 @@ def clean_point_cloud(input_path, output_path, visualize=False):
         input_path (str): Path to the input point cloud file.
         output_path (str): Path to save the cleaned point cloud file.
         visualize (bool): Whether to visualize the cleaned point cloud before saving.
+
+    Returns:
+        None
     """
     # Load the point cloud
     pcd = o3d.io.read_point_cloud(input_path)
@@ -22,7 +26,17 @@ def clean_point_cloud(input_path, output_path, visualize=False):
     print(f"Cleaned point cloud saved to {output_path}")
 
 
-def filter_outliers(pcd, visualize=False):
+def filter_outliers(pcd: o3d.geometry.PointCloud, visualize: bool = False) -> o3d.geometry.PointCloud:
+    """
+    Filter outliers from a point cloud using statistical and radius outlier removal.
+
+    Args:
+        pcd (o3d.geometry.PointCloud): The input point cloud.
+        visualize (bool): Whether to visualize the cleaned point cloud.
+
+    Returns:
+        o3d.geometry.PointCloud: The cleaned point cloud.
+    """
     # Remove statistical outliers
     _, ind = pcd.remove_statistical_outlier(nb_neighbors=10, std_ratio=0.4)
     cleaned_pcd = pcd.select_by_index(ind)

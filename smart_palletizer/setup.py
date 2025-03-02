@@ -19,6 +19,7 @@ install_deps = [
     "pillow>=11.1.0",
     "omegaconf",
     "pyyaml",
+    "black",
 ]
 
 with open("README.md", "r") as fh:

@@ -10,14 +10,28 @@ import pickle
 from utils.data_loading import PalletizerData
 from utils.visualization import show_mask
 from omegaconf import DictConfig
+from typing import List, Tuple
 
 
 class BoxDetector:
-    def __init__(self, object, config: DictConfig):
+    def __init__(self, object: str, config: DictConfig) -> None:
+        """
+        Initialize the BoxDetector with the given object and configuration.
+
+        Args:
+            object (str): The object to detect boxes for.
+            config (DictConfig): The configuration dictionary.
+        """
         self.data = PalletizerData(config, object)
         self.detected_boxes = None
 
-    def detect_boxes(self):
+    def detect_boxes(self) -> None:
+        """
+        Detect boxes in the RGB-D image.
+
+        Returns:
+            None
+        """
         device = "cuda" if torch.cuda.is_available() else "cpu"
         generator = pipeline("mask-generation", model="facebook/sam-vit-huge", device=device)
 
@@ -30,7 +44,16 @@ class BoxDetector:
         with open(os.path.join(self.data.data_path, "detected_boxes.pkl"), "wb") as f:
             pickle.dump(self.detected_boxes, f)
 
-    def find_boxes(self, box_candidates):
+    def find_boxes(self, box_candidates: List[np.ndarray]) -> List[Tuple[np.ndarray, np.ndarray]]:
+        """
+        Find boxes from the list of box candidates.
+
+        Args:
+            box_candidates (List[np.ndarray]): List of box candidate masks.
+
+        Returns:
+            List[Tuple[np.ndarray, np.ndarray]]: List of detected boxes and their bounding boxes.
+        """
         detected_boxes = []
 
         eps = 0.2
@@ -56,7 +79,13 @@ class BoxDetector:
                     break
         return detected_boxes
 
-    def visualize_detected_boxes(self):
+    def visualize_detected_boxes(self) -> None:
+        """
+        Visualize the detected boxes.
+
+        Returns:
+            None
+        """
         if not self.detected_boxes:
             print("No boxes detected.")
             return
@@ -71,7 +100,16 @@ class BoxDetector:
         plt.axis("off")
         plt.show()
 
-    def filter_masks(self, masks):
+    def filter_masks(self, masks: List[np.ndarray]) -> List[np.ndarray]:
+        """
+        Filter masks to remove contained masks.
+
+        Args:
+            masks (List[np.ndarray]): List of masks.
+
+        Returns:
+            List[np.ndarray]: List of filtered masks.
+        """
         filtered_masks = []
 
         for i, mask in enumerate(masks):

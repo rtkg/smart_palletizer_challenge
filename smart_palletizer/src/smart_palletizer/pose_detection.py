@@ -1,7 +1,8 @@
-from pose_detector.pose_detector import PoseDetector
-import argparse
-import yaml
 import os
+import argparse
+from pose_detector.pose_detector import PoseDetector
+import yaml
+
 
 if __name__ == "__main__":
 

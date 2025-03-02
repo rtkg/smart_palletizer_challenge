@@ -1,7 +1,8 @@
-from box_detector.box_detector import BoxDetector
+import os
 import argparse
 import yaml
-import os
+from box_detector.box_detector import BoxDetector
+
 
 if __name__ == "__main__":
 

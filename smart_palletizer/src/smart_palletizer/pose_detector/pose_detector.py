@@ -1,30 +1,55 @@
 import os
-import itertools
-from PIL import Image
-import cv2
-import matplotlib.pyplot as plt
+import copy
 import numpy as np
-from transformers import pipeline
 import pickle
 from utils.data_loading import PalletizerData
-from utils.visualization import show_mask
 from surface_patches import detect_planar_surfaces
 from clean_pointcloud import filter_outliers
 import open3d as o3d
 from omegaconf import DictConfig
-import copy
+from typing import List, Tuple
 
 
 class PoseDetector:
-    def __init__(self, object, config: DictConfig):
+    """
+    A class to detect poses of objects in an RGB-D image.
+    """
+
+    def __init__(self, object: str, config: DictConfig) -> None:
+        """
+        Initialize the PoseDetector with the given object and configuration.
+
+        Args:
+            object (str): The object to detect poses for.
+            config (DictConfig): The configuration dictionary.
+        """
         data = PalletizerData(config, object)
 
         self.point_cloud = self._create_point_cloud(data.width, data.height, data.intrinsics, data.rgbd_image)
         self.detected_poses = None
         self.data = data
 
-    def _create_point_cloud(self, width, height, intrinsics, rgbd_image, visualize=False):
+    def _create_point_cloud(
+        self,
+        width: int,
+        height: int,
+        intrinsics: np.ndarray,
+        rgbd_image: o3d.geometry.RGBDImage,
+        visualize: bool = False,
+    ) -> o3d.geometry.PointCloud:
+        """
+        Create a point cloud from the RGB-D image and camera intrinsics.
 
+        Args:
+            width (int): The width of the image.
+            height (int): The height of the image.
+            intrinsics (np.ndarray): The camera intrinsics.
+            rgbd_image (o3d.geometry.RGBDImage): The RGB-D image.
+            visualize (bool): Whether to visualize the point cloud.
+
+        Returns:
+            o3d.geometry.PointCloud: The created point cloud.
+        """
         # Create camera intrinsic object
         intrinsic = o3d.camera.PinholeCameraIntrinsic(
             width=width,
@@ -39,7 +64,6 @@ class PoseDetector:
         pcd = o3d.geometry.PointCloud.create_from_rgbd_image(rgbd_image, intrinsic)
         pcd.estimate_normals(search_param=o3d.geometry.KDTreeSearchParamHybrid(radius=0.1, max_nn=30))
         pcd.orient_normals_towards_camera_location()
-        # pcd.estimate_normals(search_param=o3d.geometry.KDTreeSearchParamHybrid(radius=0.1, max_nn=30))
 
         # Flip the point cloud to align with the Open3D coordinate system
         pcd.transform([[1, 0, 0, 0], [0, -1, 0, 0], [0, 0, -1, 0], [0, 0, 0, 1]])
@@ -50,7 +74,13 @@ class PoseDetector:
 
         return pcd
 
-    def detect_poses(self):
+    def detect_poses(self) -> None:
+        """
+        Detect poses of the object in the RGB-D image.
+
+        Returns:
+            None
+        """
         detected_poses = []
 
         for binary_mask, _ in self.data.detected_boxes:
@@ -61,7 +91,17 @@ class PoseDetector:
 
         self.detected_poses = detected_poses
 
-    def _detect_pose(self, binary_mask, visualize=False):
+    def _detect_pose(self, binary_mask: np.ndarray, visualize: bool = False) -> np.ndarray:
+        """
+        Detect the pose of the object using the given binary mask.
+
+        Args:
+            binary_mask (np.ndarray): The binary mask of the object.
+            visualize (bool): Whether to visualize the detected pose.
+
+        Returns:
+            np.ndarray: The transformation matrix of the detected pose.
+        """
         # Step 1: Mask the RGBD image
         color = np.asarray(self.data.rgbd_image.color)
         depth = np.asarray(self.data.rgbd_image.depth)
@@ -80,7 +120,7 @@ class PoseDetector:
 
         # Step 2: Create a point cloud from the masked RGBD image
         masked_pcd = self._create_point_cloud(self.data.width, self.data.height, self.data.intrinsics, masked_rgbd)
-        # masked_pcd = filter_outliers(masked_pcd)
+        masked_pcd = filter_outliers(masked_pcd)
 
         planes, _ = detect_planar_surfaces(masked_pcd)
         # Merge all detected planes into a single point cloud
@@ -118,7 +158,13 @@ class PoseDetector:
 
         return icp_result.transformation
 
-    def visualize_detected_poses(self):
+    def visualize_detected_poses(self) -> None:
+        """
+        Visualize the detected poses.
+
+        Returns:
+            None
+        """
         if not self.detected_poses:
             print("No poses detected.")
             return

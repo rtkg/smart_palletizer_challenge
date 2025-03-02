@@ -1,10 +1,11 @@
-import open3d as o3d
-import argparse
 import os
+from typing import List, Tuple
+import argparse
+import open3d as o3d
 import numpy as np
 
 
-def patch_detection(input_path, output_path, visualize=False):
+def patch_detection(input_path: str, output_path: str, visualize: bool = False) -> None:
     """
     Detect planar surfaces in a point cloud using RANSAC.
 
@@ -12,6 +13,9 @@ def patch_detection(input_path, output_path, visualize=False):
         input_path (str): Path to the input point cloud file.
         output_path (str): Path to save the point cloud with detected planes.
         visualize (bool): Whether to visualize the point cloud with detected planes.
+
+    Returns:
+        None
     """
     # Load the point cloud
     pcd = o3d.io.read_point_cloud(input_path)
@@ -22,7 +26,19 @@ def patch_detection(input_path, output_path, visualize=False):
     np.save(output_path, (planes, plane_models))
 
 
-def detect_planar_surfaces(pcd, visualize=False):
+def detect_planar_surfaces(
+    pcd: o3d.geometry.PointCloud, visualize: bool = False
+) -> Tuple[List[o3d.geometry.PointCloud], List[np.ndarray]]:
+    """
+    Detect planar surfaces in a point cloud using RANSAC.
+
+    Args:
+        pcd (o3d.geometry.PointCloud): The input point cloud.
+        visualize (bool): Whether to visualize the point cloud with detected planes.
+
+    Returns:
+        Tuple[List[o3d.geometry.PointCloud], List[np.ndarray]]: A tuple containing the list of detected planes and their models.
+    """
     # List to store detected planes
     planes = []
     plane_models = []
@@ -64,16 +80,16 @@ def detect_planar_surfaces(pcd, visualize=False):
     return planes, plane_models
 
 
-def project_points_to_plane(points, plane_model):
+def project_points_to_plane(points: o3d.geometry.PointCloud, plane_model: List[float]) -> o3d.geometry.PointCloud:
     """
     Projects a set of 3D points onto a specified plane.
 
     Args:
-        points (open3d.geometry.PointCloud): The input point cloud containing the 3D points to be projected.
-        plane_model (list or array-like): The coefficients [a, b, c, d] of the plane equation ax + by + cz + d = 0.
+        points (o3d.geometry.PointCloud): The input point cloud containing the 3D points to be projected.
+        plane_model (List[float]): The coefficients [a, b, c, d] of the plane equation ax + by + cz + d = 0.
 
     Returns:
-        open3d.geometry.PointCloud: A new point cloud containing the projected 3D points onto the plane.
+        o3d.geometry.PointCloud: A new point cloud containing the projected 3D points onto the plane.
     """
     [a, b, c, d] = plane_model
     plane_normal = np.array([a, b, c])
