@@ -35,7 +35,11 @@ class PalletizerData:
         self.width, self.height, self.intrinsics, self.extrinsics = load_camera_parameters(
             intrinsics_path, extrinsics_path
         )
-        self.box_mesh = load_mesh(box_mesh_path)
+        box_mesh = load_mesh(box_mesh_path)
+        self.box_pcd = box_mesh.sample_points_uniformly(number_of_points=10000)
+        self.box_pcd.scale(1 / 1000, center=(0, 0, 0))
+        self.box_pcd.normals = o3d.utility.Vector3dVector(np.asarray(box_mesh.vertex_normals))
+
         self.data_path = data_path
 
         self.object = object
@@ -111,7 +115,38 @@ def load_camera_parameters(intrinsics_path, extrinsics_path):
     return intrinsics["width"], intrinsics["height"], intrinsics_matrix, extrinsics_matrix
 
 
-def load_mesh(mesh_path: str) -> None:
+def load_point_cloud(pcd_path: str, visualize=False) -> o3d.geometry.PointCloud:
+    """
+    Load a point cloud from a PLY file using Open3D.
+
+    Args:
+        ply_file_path (str): Path to the PLY file.
+
+    Returns:
+        o3d.geometry.PointCloud: Loaded point cloud.
+    Raises:
+        FileNotFoundError: If the PLY file could not be loaded.
+    """
+    if not os.path.exists(pcd_path):
+        raise FileNotFoundError(f"PLY file not found: {pcd_path}")
+
+    # Load the PLY file
+    pcd = o3d.io.read_point_cloud(pcd_path)
+    pcd.estimate_normals(search_param=o3d.geometry.KDTreeSearchParamHybrid(radius=0.1, max_nn=30))
+    pcd.orient_normals_towards_camera_location()
+    # pcd.estimate_normals(search_param=o3d.geometry.KDTreeSearchParamHybrid(radius=0.1, max_nn=30))
+
+    # Flip the point cloud to align with the Open3D coordinate system
+    pcd.transform([[1, 0, 0, 0], [0, -1, 0, 0], [0, 0, -1, 0], [0, 0, 0, 1]])
+
+    # Visualize the point cloud
+    if visualize:
+        o3d.visualization.draw_geometries([pcd], point_show_normal=True)
+
+    return pcd
+
+
+def load_mesh(mesh_path: str, visualize=False) -> None:
     """
     Load a PLY file using Open3D.
 
@@ -127,5 +162,8 @@ def load_mesh(mesh_path: str) -> None:
     # Load the PLY file
     mesh = o3d.io.read_triangle_mesh(mesh_path)
     mesh.compute_vertex_normals()
+
+    if visualize:
+        o3d.visualization.draw_geometries([mesh])
 
     return mesh

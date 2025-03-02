@@ -15,6 +15,14 @@ def clean_point_cloud(input_path, output_path, visualize=False):
     # Load the point cloud
     pcd = o3d.io.read_point_cloud(input_path)
 
+    cleaned_pcd = filter_outliers(pcd, visualize=visualize)
+
+    # Save the cleaned point cloud
+    o3d.io.write_point_cloud(output_path, cleaned_pcd)
+    print(f"Cleaned point cloud saved to {output_path}")
+
+
+def filter_outliers(pcd, visualize=False):
     # Remove statistical outliers
     _, ind = pcd.remove_statistical_outlier(nb_neighbors=10, std_ratio=0.4)
     cleaned_pcd = pcd.select_by_index(ind)
@@ -26,9 +34,7 @@ def clean_point_cloud(input_path, output_path, visualize=False):
     if visualize:
         o3d.visualization.draw_geometries([cleaned_pcd])
 
-    # Save the cleaned point cloud
-    o3d.io.write_point_cloud(output_path, cleaned_pcd)
-    print(f"Cleaned point cloud saved to {output_path}")
+    return cleaned_pcd
 
 
 if __name__ == "__main__":

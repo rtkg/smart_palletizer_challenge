@@ -4,7 +4,7 @@ import os
 import numpy as np
 
 
-def detect_planar_surfaces(input_path, output_path, visualize=True):
+def patch_detection(input_path, output_path, visualize=False):
     """
     Detect planar surfaces in a point cloud using RANSAC.
 
@@ -16,6 +16,13 @@ def detect_planar_surfaces(input_path, output_path, visualize=True):
     # Load the point cloud
     pcd = o3d.io.read_point_cloud(input_path)
 
+    planes, plane_models = detect_planar_surfaces(pcd, visualize=visualize)
+
+    # Save the plane models to the output path
+    np.save(output_path, (planes, plane_models))
+
+
+def detect_planar_surfaces(pcd, visualize=False):
     # List to store detected planes
     planes = []
     plane_models = []
@@ -41,19 +48,20 @@ def detect_planar_surfaces(input_path, output_path, visualize=True):
         pcd = outlier_cloud
 
         # Stop if the remaining point cloud is too small
-        if len(pcd.points) < 500:
+        if len(pcd.points) < 400:
             break
 
     # Assign random colors to each detected plane
     for plane in planes:
         color = np.random.rand(3)
         plane.paint_uniform_color(color)
+        plane.estimate_normals()
+        plane.orient_normals_towards_camera_location()
 
     if visualize:
-        o3d.visualization.draw_geometries(planes)
+        o3d.visualization.draw_geometries(planes, point_show_normal=True)
 
-    # Save the plane models to the output path
-    np.save(output_path, plane_models)
+    return planes, plane_models
 
 
 def project_points_to_plane(points, plane_model):
@@ -104,4 +112,4 @@ if __name__ == "__main__":
     parser.add_argument("--visualize", action="store_false", help="Visualize the point cloud with detected planes.")
     args = parser.parse_args()
 
-    detect_planar_surfaces(args.input_path, args.output_path, args.visualize)
+    patch_detection(args.input_path, args.output_path, args.visualize)
