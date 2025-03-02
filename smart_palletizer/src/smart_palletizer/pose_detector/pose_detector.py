@@ -11,7 +11,7 @@ from omegaconf import DictConfig
 
 class PoseDetector:
     """
-    A class to detect poses of objects in an RGB-D image.
+    A class to detect poses of objects in an RGB-D image by using ICP given a binary image object mask and a target object point cloud.
 
     Attributes:
         point_cloud (o3d.geometry.PointCloud): The point cloud created from the RGB-D image.
@@ -111,10 +111,8 @@ class PoseDetector:
             np.ndarray: The transformation matrix of the detected pose.
         """
         # Step 1: Mask the RGBD image
-        color = np.asarray(self.data.rgbd_image.color)
-        depth = np.asarray(self.data.rgbd_image.depth)
-        masked_color = color.copy()
-        masked_depth = depth.copy()
+        masked_color = np.asarray(self.data.rgbd_image.color).copy()
+        masked_depth = np.asarray(self.data.rgbd_image.depth).copy()
 
         masked_color[~binary_mask] = 0
         masked_depth[~binary_mask] = 0

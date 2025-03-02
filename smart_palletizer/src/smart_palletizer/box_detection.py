@@ -16,7 +16,7 @@ if __name__ == "__main__":
         help="Detection object, can be 'small_box' or 'medium_box'.",
     )
 
-    parser.add_argument("--visualize", "-v", action="store_false", help="Visualize the detected boxes.")
+    parser.add_argument("--visualize", "-v", action="store_true", help="Visualize the detected boxes.")
     args = parser.parse_args()
 
     # Load configuration
