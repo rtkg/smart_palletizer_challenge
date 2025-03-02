@@ -82,8 +82,6 @@ def load_image(image_path: str, is_depth_image: bool = False) -> np.ndarray:
     # Load image
     if is_depth_image:
         image = cv2.imread(image_path, cv2.IMREAD_ANYDEPTH)
-        # Remove noise using a median filter
-        image = cv2.medianBlur(image, 5)
     else:
         image = cv2.imread(image_path)
 
@@ -151,7 +149,6 @@ def load_point_cloud(pcd_path: str, visualize: bool = False) -> o3d.geometry.Poi
     pcd = o3d.io.read_point_cloud(pcd_path)
     pcd.estimate_normals(search_param=o3d.geometry.KDTreeSearchParamHybrid(radius=0.1, max_nn=30))
     pcd.orient_normals_towards_camera_location()
-    # pcd.estimate_normals(search_param=o3d.geometry.KDTreeSearchParamHybrid(radius=0.1, max_nn=30))
 
     # Flip the point cloud to align with the Open3D coordinate system
     pcd.transform([[1, 0, 0, 0], [0, -1, 0, 0], [0, 0, -1, 0], [0, 0, 0, 1]])

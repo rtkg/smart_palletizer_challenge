@@ -1,4 +1,6 @@
 import os
+import pickle
+from typing import List, Tuple
 import itertools
 import torch
 from PIL import Image
@@ -6,14 +8,23 @@ import cv2
 import matplotlib.pyplot as plt
 import numpy as np
 from transformers import pipeline
-import pickle
 from utils.data_loading import PalletizerData
-from utils.visualization import show_mask
 from omegaconf import DictConfig
-from typing import List, Tuple
 
 
 class BoxDetector:
+    """
+    A class to detect boxes in RGB-D images.
+
+    Attributes:
+        data (PalletizerData): The loaded data for the palletizer.
+        detected_boxes (List[Tuple[np.ndarray, np.ndarray]]): The detected boxes and their bounding boxes.
+
+    Methods:
+        detect_boxes(): Detect boxes in the RGB-D image.
+        visualize_detected_boxes(): Visualize the detected boxes.
+    """
+
     def __init__(self, object: str, config: DictConfig) -> None:
         """
         Initialize the BoxDetector with the given object and configuration.
@@ -38,13 +49,13 @@ class BoxDetector:
         color_image_pil = Image.fromarray(cv2.cvtColor(self.data.color_image, cv2.COLOR_BGR2RGB))
         masks = generator(color_image_pil, points_per_batch=128, pred_iou_thresh=0.99)
 
-        box_candidates = self.filter_masks(masks["masks"])
-        self.detected_boxes = self.find_boxes(box_candidates)
+        box_candidates = self._filter_masks(masks["masks"])
+        self.detected_boxes = self._find_boxes(box_candidates)
 
         with open(os.path.join(self.data.data_path, "detected_boxes.pkl"), "wb") as f:
             pickle.dump(self.detected_boxes, f)
 
-    def find_boxes(self, box_candidates: List[np.ndarray]) -> List[Tuple[np.ndarray, np.ndarray]]:
+    def _find_boxes(self, box_candidates: List[np.ndarray]) -> List[Tuple[np.ndarray, np.ndarray]]:
         """
         Find boxes from the list of box candidates.
 
@@ -100,7 +111,7 @@ class BoxDetector:
         plt.axis("off")
         plt.show()
 
-    def filter_masks(self, masks: List[np.ndarray]) -> List[np.ndarray]:
+    def _filter_masks(self, masks: List[np.ndarray]) -> List[np.ndarray]:
         """
         Filter masks to remove contained masks.
 

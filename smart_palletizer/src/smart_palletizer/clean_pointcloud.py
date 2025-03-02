@@ -1,7 +1,6 @@
-import open3d as o3d
 import argparse
 import os
-from typing import Optional
+import open3d as o3d
 
 
 def clean_point_cloud(input_path: str, output_path: str, visualize: bool = False) -> None:

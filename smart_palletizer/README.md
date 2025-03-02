@@ -2,41 +2,6 @@
 
 [[_TOC_]]
 
-## Introduction
-
-Welcome to the [NEURA robotics](https://neura-robotics.com) Smart Palletizer challenge, the goal of this challenge is to assess your knowledge regarding various software development topics.
-
-## Instructions
-
-You are free to use **Python or C++**, preferably with Robotics Operating System ([**ROS**](https://www.ros.org)) either ROS1 or ROS2.
-
-Please explain your **methodology** into solving the challenging tasks either via updating this readme file or via creating a separate Markdown file. 
-
-> Please note that using [ChatGPT](https://chatgpt.com) is OK as long as you understand what you copy from there!.
-
-## Tasks
-
-Tasks have various complexity, optimal thing is to solve them all, however if you didn't solve some tasks please submit your code.
-
-> Tasks are not interdependent.
-
-### Input 
-
-![color_image](/data/medium_box/color_image.png)
-
-Data are provided in two formats:
-1. ROSBAG:
-
-    If you use **ROS**, please download and use the [ROS bag](https://drive.google.com/file/d/1ldM94Tz_I5NytLaQB8AydF_pxDG7EOkd/view?usp=sharing) which contains data needed to achieve the task.
-2. RAW data:
-
-    the [data](./data/) folder, there you can find two types of boxes:
-    1. **small box**: dimensions: [0.340, 0.250, 0.095] in meters.
-    2. **medium box**: dimensions: [0.255, 0.155, 0.100] in meters (only one box in the left bottom corner is visible).
-
-    Provided data includes color/depth images in addition to box meshes, and other forms of data that is useful to solve the tasks.
-
-
 ### 1. 2D boxes detection
 
 ---

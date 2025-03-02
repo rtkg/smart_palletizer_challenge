@@ -1,18 +1,26 @@
 import os
 import copy
-import numpy as np
 import pickle
+import numpy as np
 from utils.data_loading import PalletizerData
 from surface_patches import detect_planar_surfaces
 from clean_pointcloud import filter_outliers
 import open3d as o3d
 from omegaconf import DictConfig
-from typing import List, Tuple
 
 
 class PoseDetector:
     """
     A class to detect poses of objects in an RGB-D image.
+
+    Attributes:
+        point_cloud (o3d.geometry.PointCloud): The point cloud created from the RGB-D image.
+        detected_poses (List[np.ndarray]): The detected poses of the objects.
+        data (PalletizerData): The loaded data for the palletizer.
+
+    Methods:
+        detect_poses(): Detect poses of the object in the RGB-D image.
+        visualize_detected_poses(): Visualize the detected poses.
     """
 
     def __init__(self, object: str, config: DictConfig) -> None:
@@ -76,7 +84,7 @@ class PoseDetector:
 
     def detect_poses(self) -> None:
         """
-        Detect poses of the object in the RGB-D image.
+        Detect poses of the object in the RGB-D image. Uses pre-computed image masks for single boxes
 
         Returns:
             None
@@ -93,10 +101,10 @@ class PoseDetector:
 
     def _detect_pose(self, binary_mask: np.ndarray, visualize: bool = False) -> np.ndarray:
         """
-        Detect the pose of the object using the given binary mask.
+        Detect the pose of a box in the underlying RGB-D image using the given binary image mask and ICP.
 
         Args:
-            binary_mask (np.ndarray): The binary mask of the object.
+            binary_mask (np.ndarray): The binary mask of a box.
             visualize (bool): Whether to visualize the detected pose.
 
         Returns:

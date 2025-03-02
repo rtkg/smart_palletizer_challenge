@@ -1,3 +1,8 @@
+"""
+This script runs the box pose detector using an RGB-D image.
+It allows detection of 'small_box' or 'medium_box' objects and can visualize the detected poses.
+"""
+
 import os
 import argparse
 from pose_detector.pose_detector import PoseDetector
