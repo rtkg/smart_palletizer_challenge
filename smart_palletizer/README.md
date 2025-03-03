@@ -6,6 +6,12 @@
 
 ---
 
+Create a virtual environment, e.g., using venv:
+
+```bash
+python3.10 -m venv .smart_palletizer
+```
+
 To install the required dependencies, cd into the `smart_palletizer_challenge/smart_palletizer` root folder and run:
 
 ```bash
