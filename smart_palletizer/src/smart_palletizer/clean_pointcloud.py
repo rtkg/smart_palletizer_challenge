@@ -14,15 +14,17 @@ Command-line arguments:
 import argparse
 import os
 import open3d as o3d
+from omegaconf import OmegaConf, DictConfig
 
 
-def clean_point_cloud(input_path: str, output_path: str, visualize: bool = False) -> None:
+def clean_point_cloud(input_path: str, output_path: str, config: DictConfig, visualize: bool = False) -> None:
     """
     Clean a point cloud by removing statistical and radius outliers.
 
     Args:
         input_path (str): Path to the input point cloud file.
         output_path (str): Path to save the cleaned point cloud file.
+        config (DictConfig): Configuration parameters.
         visualize (bool): Whether to visualize the cleaned point cloud before saving.
 
     Returns:
@@ -31,30 +33,33 @@ def clean_point_cloud(input_path: str, output_path: str, visualize: bool = False
     # Load the point cloud
     pcd = o3d.io.read_point_cloud(input_path)
 
-    cleaned_pcd = filter_outliers(pcd, visualize=visualize)
+    cleaned_pcd = filter_outliers(pcd, config.filter_outliers, visualize=visualize)
 
     # Save the cleaned point cloud
     o3d.io.write_point_cloud(output_path, cleaned_pcd)
     print(f"Cleaned point cloud saved to {output_path}")
 
 
-def filter_outliers(pcd: o3d.geometry.PointCloud, visualize: bool = False) -> o3d.geometry.PointCloud:
+def filter_outliers(
+    pcd: o3d.geometry.PointCloud, config: DictConfig, visualize: bool = False
+) -> o3d.geometry.PointCloud:
     """
     Filter outliers from a point cloud using statistical and radius outlier removal.
 
     Args:
         pcd (o3d.geometry.PointCloud): The input point cloud.
+        config (DictConfig): Configuration parameters for filtering outliers.
         visualize (bool): Whether to visualize the cleaned point cloud.
 
     Returns:
         o3d.geometry.PointCloud: The cleaned point cloud.
     """
     # Remove statistical outliers
-    _, ind = pcd.remove_statistical_outlier(nb_neighbors=10, std_ratio=0.4)
+    _, ind = pcd.remove_statistical_outlier(config.nb_neighbors, std_ratio=config.std_ratio)
     cleaned_pcd = pcd.select_by_index(ind)
 
     # Remove radius outliers
-    _, ind = cleaned_pcd.remove_radius_outlier(nb_points=150, radius=0.1)
+    _, ind = cleaned_pcd.remove_radius_outlier(nb_points=config.nb_points, radius=config.radius)
     cleaned_pcd = cleaned_pcd.select_by_index(ind)
 
     if visualize:
@@ -68,6 +73,7 @@ if __name__ == "__main__":
     current_file_path = os.path.abspath(__file__)
     default_file_path = os.path.join(os.path.dirname(current_file_path), "../../data/small_box/small_box_0_raw.ply")
     default_load_path = os.path.join(os.path.dirname(current_file_path), "../../data/small_box/small_box_0_cleaned.ply")
+    config_path = os.path.join(os.path.dirname(current_file_path), "../../config/clean_pointcloud.yaml")
 
     parser = argparse.ArgumentParser(description="Clean a point cloud and save the result.")
     parser.add_argument(
@@ -84,4 +90,7 @@ if __name__ == "__main__":
     parser.add_argument("--visualize", "-v", action="store_true", help="Visualize the point cloud before saving.")
     args = parser.parse_args()
 
-    clean_point_cloud(args.input_path, args.output_path, args.visualize)
+    # Load configuration
+    config = OmegaConf.load(config_path)
+
+    clean_point_cloud(args.input_path, args.output_path, config, args.visualize)

@@ -17,15 +17,17 @@ import argparse
 import pickle
 import open3d as o3d
 import numpy as np
+from omegaconf import OmegaConf, DictConfig
 
 
-def patch_detection(input_path: str, output_path: str, visualize: bool = False) -> None:
+def patch_detection(input_path: str, output_path: str, config: DictConfig, visualize: bool = False) -> None:
     """
     Detect planar surfaces in a point cloud using RANSAC.
 
     Args:
         input_path (str): Path to the input point cloud file.
         output_path (str): Path to save the point cloud with detected planes.
+        config (DictConfig): Configuration parameters for patch detection.
         visualize (bool): Whether to visualize the point cloud with detected planes.
 
     Returns:
@@ -36,7 +38,7 @@ def patch_detection(input_path: str, output_path: str, visualize: bool = False) 
     if pcd.is_empty():
         raise ValueError(f"The point cloud is empty. Please check the input path: {input_path}")
 
-    planes, plane_models = detect_planar_surfaces(pcd, visualize=visualize)
+    planes, plane_models = detect_planar_surfaces(pcd, config.plane_detection, visualize=visualize)
 
     # Save the plane models to the output path
     with open(output_path, "wb") as f:
@@ -44,30 +46,28 @@ def patch_detection(input_path: str, output_path: str, visualize: bool = False) 
 
 
 def detect_planar_surfaces(
-    pcd: o3d.geometry.PointCloud, visualize: bool = False
+    pcd: o3d.geometry.PointCloud, config: DictConfig, visualize: bool = False
 ) -> Tuple[List[o3d.geometry.PointCloud], List[np.ndarray]]:
     """
     Detect planar surfaces in a point cloud using RANSAC.
 
     Args:
         pcd (o3d.geometry.PointCloud): The input point cloud.
+        config (DictConfig): Configuration parameters for plane detection.
         visualize (bool): Whether to visualize the point cloud with detected planes.
 
     Returns:
-        Tuple[List[o3d.geometry.PointCloud], List[np.ndarray]]: A tuple containing the list of detected planes and their models.
+        Tuple[List[o3d.geometry.PointCloud], List[np.ndarray]]: A tuple containing the list of detected
+        planes and their models.
     """
     # List to store detected planes
     planes = []
     plane_models = []
-    # Parameters for plane segmentation
-    distance_threshold = 0.01
-    ransac_n = 3
-    num_iterations = 1000
 
     while True:
-        # Segment the largest plane in the point cloud
+        # Segment the largest plane in the point cloud using RANSAC
         plane_model, inliers = pcd.segment_plane(
-            distance_threshold=distance_threshold, ransac_n=ransac_n, num_iterations=num_iterations
+            distance_threshold=config.distance_threshold, ransac_n=config.ransac_n, num_iterations=config.num_iterations
         )
         inlier_cloud = pcd.select_by_index(inliers)
         inlier_cloud = project_points_to_plane(inlier_cloud, plane_model)
@@ -81,7 +81,7 @@ def detect_planar_surfaces(
         pcd = outlier_cloud
 
         # Stop if the remaining point cloud is too small
-        if len(pcd.points) < 400:
+        if len(pcd.points) < config.min_points:
             break
 
     # Assign random colors to each detected plane
@@ -131,6 +131,7 @@ if __name__ == "__main__":
     default_output_path = os.path.join(
         os.path.dirname(current_file_path), "../../data/medium_box/medium_box_0_planes.npy"
     )
+    config_path = os.path.join(os.path.dirname(current_file_path), "../../config/surface_patches.yaml")
 
     parser = argparse.ArgumentParser(description="Detect planar surfaces in a point cloud and save the result.")
     parser.add_argument(
@@ -154,4 +155,7 @@ if __name__ == "__main__":
     )
     args = parser.parse_args()
 
-    patch_detection(args.input_path, args.output_path, args.visualize)
+    # Load configuration
+    config = OmegaConf.load(config_path)
+
+    patch_detection(args.input_path, args.output_path, config, args.visualize)

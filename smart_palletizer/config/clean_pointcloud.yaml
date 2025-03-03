@@ -1,0 +1,5 @@
+filter_outliers:
+  nb_neighbors: 10 # Number of neighbors to considerd for statistical filtering
+  std_ratio: 0.4 # Max std for statistical filtering
+  nb_points: 150 # Min number of neighbors to consider a point
+  radius: 0.1 # Radius outlier removal

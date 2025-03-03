@@ -1,0 +1,5 @@
+plane_detection:
+  distance_threshold: 0.01 # maximum distance for a RANSAC inlier
+  ransac_n: 3 # number of RANSAC points
+  num_iterations: 1000 # number of RANSAC iterations
+  min_points: 400 # minimum number of points do be considered a valid plane

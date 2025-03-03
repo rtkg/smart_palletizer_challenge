@@ -31,11 +31,12 @@ class PoseDetector:
             object (str): The object to detect poses for.
             config (DictConfig): The configuration dictionary.
         """
-        data = PalletizerData(config, object)
+        data = PalletizerData(config.palletizer_data, object)
 
-        self.point_cloud = self._create_point_cloud(data.width, data.height, data.intrinsics, data.rgbd_image)
         self.detected_poses = None
         self.data = data
+        self.config = config
+        self.point_cloud = self._create_point_cloud(data.width, data.height, data.intrinsics, data.rgbd_image)
 
     def _create_point_cloud(
         self,
@@ -69,8 +70,10 @@ class PoseDetector:
         )
 
         # Create a point cloud from the RGBD image and camera intrinsics
+        radius = self.config.pose_detector.radius
+        max_nn = self.config.pose_detector.max_nn
         pcd = o3d.geometry.PointCloud.create_from_rgbd_image(rgbd_image, intrinsic)
-        pcd.estimate_normals(search_param=o3d.geometry.KDTreeSearchParamHybrid(radius=0.1, max_nn=30))
+        pcd.estimate_normals(search_param=o3d.geometry.KDTreeSearchParamHybrid(radius=radius, max_nn=max_nn))
         pcd.orient_normals_towards_camera_location()
 
         # Flip the point cloud to align with the Open3D coordinate system
@@ -126,9 +129,9 @@ class PoseDetector:
 
         # Step 2: Create a point cloud from the masked RGBD image
         masked_pcd = self._create_point_cloud(self.data.width, self.data.height, self.data.intrinsics, masked_rgbd)
-        masked_pcd = filter_outliers(masked_pcd)
+        masked_pcd = filter_outliers(masked_pcd, self.config.filter_outliers)
 
-        planes, _ = detect_planar_surfaces(masked_pcd)
+        planes, _ = detect_planar_surfaces(masked_pcd, self.config.plane_detection)
         # Merge all detected planes into a single point cloud
         masked_pcd = o3d.geometry.PointCloud()
         for plane in planes:
@@ -141,13 +144,15 @@ class PoseDetector:
         # Calculate the mean x, y, z coordinates from the masked point cloud
         initial_transformation[0:3, 3] = np.mean(np.asarray(masked_pcd.points), axis=0)
 
+        max_correspondence_distance = self.config.pose_detector.max_correspondence_distance
+        max_iteration = self.config.pose_detector.max_iteration
         icp_result = o3d.pipelines.registration.registration_icp(
             box_pcd,
             masked_pcd,
-            max_correspondence_distance=0.05,
+            max_correspondence_distance=max_correspondence_distance,
             init=initial_transformation,
             estimation_method=o3d.pipelines.registration.TransformationEstimationForGeneralizedICP(),
-            criteria=o3d.pipelines.registration.ICPConvergenceCriteria(max_iteration=1000),
+            criteria=o3d.pipelines.registration.ICPConvergenceCriteria(max_iteration=max_iteration),
         )
 
         # Apply the transformation to the mesh

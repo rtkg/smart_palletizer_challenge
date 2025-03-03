@@ -1,3 +1,24 @@
-depth_scale: 0.001  # assuming depth measurements to be given in [mm]
-small_box_dimensions: [0.255, 0.155, 0.100]
-medium_box_dimensions: [0.340, 0.250, 0.095]
+palletizer_data:
+  depth_scale: 0.001  # assuming depth measurements to be given in [mm]
+  small_box_dimensions: [0.255, 0.155, 0.100]
+  medium_box_dimensions: [0.340, 0.250, 0.095]
+
+pose_detector:
+  # radius max neighbors for surface normal estimation
+  radius: 0.1
+  max_nn: 30
+  # max correspondence distance and interation for ICP registration
+  max_correspondence_distance: 0.05
+  max_iteration: 1000
+
+plane_detection:
+  distance_threshold: 0.01 # maximum distance for a RANSAC inlier
+  ransac_n: 3 # number of RANSAC points
+  num_iterations: 1000 # number of RANSAC iterations
+  min_points: 400 # minimum number of points do be considered a valid plane
+
+filter_outliers:
+  nb_neighbors: 10 # Number of neighbors to considerd for statistical filtering
+  std_ratio: 0.4 # Max std for statistical filtering
+  nb_points: 150 # Min number of neighbors to consider a point
+  radius: 0.1 # Radius outlier removal
