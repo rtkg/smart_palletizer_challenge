@@ -2,3 +2,9 @@ palletizer_data:
   depth_scale: 0.001  # assuming depth measurements to be given in [mm]
   small_box_dimensions: [0.255, 0.155, 0.100]
   medium_box_dimensions: [0.340, 0.250, 0.095]
+
+box_detector:
+  points_per_batch: 128 # number of points to be processed in a single batch by SAM
+  pred_iou_thresh: 0.99 # SAM iou threshold
+  eps: 0.2 # percentage threshold for width/height box side matching to SAM patch bounding boxes
+  depth_cutoff: 1.9 # distance in [m], beyond which SAM patches are ignored

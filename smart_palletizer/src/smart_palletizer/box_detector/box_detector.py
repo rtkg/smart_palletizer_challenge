@@ -34,6 +34,7 @@ class BoxDetector:
             config (DictConfig): The configuration dictionary.
         """
         self.data = PalletizerData(config.palletizer_data, object)
+        self.config = config.box_detector
         self.detected_boxes = None
 
     def detect_boxes(self) -> None:
@@ -47,7 +48,9 @@ class BoxDetector:
         generator = pipeline("mask-generation", model="facebook/sam-vit-huge", device=device)
 
         color_image_pil = Image.fromarray(cv2.cvtColor(self.data.color_image, cv2.COLOR_BGR2RGB))
-        masks = generator(color_image_pil, points_per_batch=128, pred_iou_thresh=0.99)
+        masks = generator(
+            color_image_pil, points_per_batch=self.config.points_per_batch, pred_iou_thresh=self.config.pred_iou_thresh
+        )
 
         box_candidates = self._filter_masks(masks["masks"])
         self.detected_boxes = self._find_boxes(box_candidates)
@@ -67,7 +70,7 @@ class BoxDetector:
         """
         detected_boxes = []
 
-        eps = 0.2
+        eps = self.config.eps
         fx = self.data.intrinsics[0, 0]
         fy = self.data.intrinsics[1, 1]
         permutations = list(itertools.permutations(self.data.box_dimensions, 2))
@@ -78,7 +81,7 @@ class BoxDetector:
             w = np.linalg.norm(bbox[0] - bbox[1])
             h = np.linalg.norm(bbox[1] - bbox[2])
             z3d = np.median(self.data.depth_image[box_candidate]) * self.data.depth_scale
-            if z3d > 1.9:
+            if z3d > self.config.depth_cutoff:
                 continue
             for perm in permutations:
                 # camera projection using the intrinsics
