@@ -1,6 +1,13 @@
 """
 This script runs the box pose detector using an RGB-D image.
 It allows detection of 'small_box' or 'medium_box' objects and can visualize the detected poses.
+
+Example usage:
+    python src/smart_palletizer/pose_detection.py -o small_box -v
+
+Arguments:
+    --object, -o: Detection object, can be 'small_box' or 'medium_box'. Default is 'small_box'.
+    --visualize, -v: Visualize the point cloud with detected planes. This flag is optional.
 """
 
 import os
@@ -22,7 +29,7 @@ if __name__ == "__main__":
     )
 
     parser.add_argument(
-        "--visualize", "-v", action="store_false", help="Visualize the point cloud with detected planes."
+        "--visualize", "-v", action="store_true", help="Visualize the point cloud with detected planes."
     )
     args = parser.parse_args()
 

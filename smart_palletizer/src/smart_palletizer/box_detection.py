@@ -1,3 +1,15 @@
+"""
+This script detects boxes based on an RGB-D image using the BoxDetector class.
+It allows detection of 'small_box' or 'medium_box' objects and can visualize the detected boxes.
+
+Example usage:
+    python src/smart_palletizer/box_detection.py -o small_box -v
+
+Arguments:
+    --object, -o: Detection object, can be 'small_box' or 'medium_box'. Default is 'small_box'.
+    --visualize, -v: Visualize the detected boxes. This flag is optional.
+"""
+
 import os
 import argparse
 import yaml

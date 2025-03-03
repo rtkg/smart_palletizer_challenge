@@ -1,6 +1,20 @@
+"""
+Script parses command-line arguments and calls the patch_detection function. Used to detect planar 
+surfaces in point clouds representing boxes.
+
+Example usage:
+    python surface_patches.py -i /path/to/input.ply -o /path/to/output.npy -v
+
+Command-line arguments:
+    --input_path, -i (str): Path to the input point cloud file. Defaults to a sample file path.
+    --output_path, -o (str): Path to save the point cloud with detected planes. Defaults to a sample output path.
+    --visualize, -v (bool): Flag to visualize the point cloud with detected planes. Defaults to False.
+"""
+
 import os
 from typing import List, Tuple
 import argparse
+import pickle
 import open3d as o3d
 import numpy as np
 
@@ -19,11 +33,14 @@ def patch_detection(input_path: str, output_path: str, visualize: bool = False) 
     """
     # Load the point cloud
     pcd = o3d.io.read_point_cloud(input_path)
+    if pcd.is_empty():
+        raise ValueError(f"The point cloud is empty. Please check the input path: {input_path}")
 
     planes, plane_models = detect_planar_surfaces(pcd, visualize=visualize)
 
     # Save the plane models to the output path
-    np.save(output_path, (planes, plane_models))
+    with open(output_path, "wb") as f:
+        pickle.dump(([np.asarray(plane.points) for plane in planes], plane_models), f)
 
 
 def detect_planar_surfaces(
@@ -75,7 +92,7 @@ def detect_planar_surfaces(
         plane.orient_normals_towards_camera_location()
 
     if visualize:
-        o3d.visualization.draw_geometries(planes, point_show_normal=True)
+        o3d.visualization.draw_geometries(planes)
 
     return planes, plane_models
 
@@ -106,6 +123,7 @@ def project_points_to_plane(points: o3d.geometry.PointCloud, plane_model: List[f
 
 
 if __name__ == "__main__":
+
     current_file_path = os.path.abspath(__file__)
     default_input_path = os.path.join(
         os.path.dirname(current_file_path), "../../data/medium_box/medium_box_0_cleaned.ply"
@@ -116,16 +134,24 @@ if __name__ == "__main__":
 
     parser = argparse.ArgumentParser(description="Detect planar surfaces in a point cloud and save the result.")
     parser.add_argument(
-        "--input_path", type=str, nargs="?", default=default_input_path, help="Path to the input point cloud file."
+        "--input_path",
+        "-i",
+        type=str,
+        nargs="?",
+        default=default_input_path,
+        help="Path to the input point cloud file.",
     )
     parser.add_argument(
         "--output_path",
+        "-o",
         type=str,
         nargs="?",
         default=default_output_path,
         help="Path to save the point cloud with detected planes.",
     )
-    parser.add_argument("--visualize", action="store_false", help="Visualize the point cloud with detected planes.")
+    parser.add_argument(
+        "--visualize", "-v", action="store_true", help="Visualize the point cloud with detected planes."
+    )
     args = parser.parse_args()
 
     patch_detection(args.input_path, args.output_path, args.visualize)

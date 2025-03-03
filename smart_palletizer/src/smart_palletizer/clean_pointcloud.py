@@ -1,3 +1,16 @@
+"""
+Script parses command-line arguments and calls the clean_point_cloud function. Used to clean point clouds by 
+removing outliers.
+
+Example usage:
+    python clean_pointcloud.py -i /path/to/input.ply -o /path/to/output.ply -v
+
+Command-line arguments:
+    --input_path, -i (str): Path to the input point cloud file. Defaults to a sample file path.
+    --output_path, -o (str): Path to save the cleaned point cloud file. Defaults to a sample output path.
+    --visualize, -v (bool): Flag to visualize the cleaned point cloud before saving. Defaults to False.
+"""
+
 import argparse
 import os
 import open3d as o3d
@@ -53,23 +66,22 @@ def filter_outliers(pcd: o3d.geometry.PointCloud, visualize: bool = False) -> o3
 if __name__ == "__main__":
     # Get the absolute path of the current file
     current_file_path = os.path.abspath(__file__)
-    default_file_path = os.path.join(os.path.dirname(current_file_path), "../../data/medium_box/medium_box_0_raw.ply")
-    default_load_path = os.path.join(
-        os.path.dirname(current_file_path), "../../data/medium_box/medium_box_0_cleaned.ply"
-    )
+    default_file_path = os.path.join(os.path.dirname(current_file_path), "../../data/small_box/small_box_0_raw.ply")
+    default_load_path = os.path.join(os.path.dirname(current_file_path), "../../data/small_box/small_box_0_cleaned.ply")
 
     parser = argparse.ArgumentParser(description="Clean a point cloud and save the result.")
     parser.add_argument(
-        "--input_path", type=str, nargs="?", default=default_file_path, help="Path to the input point cloud file."
+        "--input_path", "-i", type=str, nargs="?", default=default_file_path, help="Path to the input point cloud file."
     )
     parser.add_argument(
         "--output_path",
+        "-o",
         type=str,
         nargs="?",
         default=default_load_path,
         help="Path to save the cleaned point cloud file.",
     )
-    parser.add_argument("--visualize", action="store_false", help="Visualize the point cloud before saving.")
+    parser.add_argument("--visualize", "-v", action="store_true", help="Visualize the point cloud before saving.")
     args = parser.parse_args()
 
     clean_point_cloud(args.input_path, args.output_path, args.visualize)
