@@ -12,7 +12,7 @@ Arguments:
 
 import os
 import argparse
-import yaml
+from omegaconf import OmegaConf
 from box_detector.box_detector import BoxDetector
 
 
@@ -34,8 +34,7 @@ if __name__ == "__main__":
     # Load configuration
     current_file_path = os.path.abspath(__file__)
     config_path = os.path.join(os.path.dirname(current_file_path), "../../config/box_detector.yaml")
-    with open(config_path, "r") as file:
-        config = yaml.safe_load(file)
+    config = OmegaConf.load(config_path)
 
     box_detector = BoxDetector(args.object, config)
     box_detector.detect_boxes()

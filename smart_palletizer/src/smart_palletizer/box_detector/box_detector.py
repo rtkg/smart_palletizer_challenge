@@ -33,7 +33,7 @@ class BoxDetector:
             object (str): The object to detect boxes for.
             config (DictConfig): The configuration dictionary.
         """
-        self.data = PalletizerData(config, object)
+        self.data = PalletizerData(config.palletizer_data, object)
         self.detected_boxes = None
 
     def detect_boxes(self) -> None:

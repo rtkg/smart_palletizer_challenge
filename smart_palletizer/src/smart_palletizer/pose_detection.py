@@ -13,7 +13,7 @@ Arguments:
 import os
 import argparse
 from pose_detector.pose_detector import PoseDetector
-import yaml
+from omegaconf import OmegaConf
 
 
 if __name__ == "__main__":
@@ -36,8 +36,7 @@ if __name__ == "__main__":
     # Load configuration
     current_file_path = os.path.abspath(__file__)
     config_path = os.path.join(os.path.dirname(current_file_path), "../../config/pose_detector.yaml")
-    with open(config_path, "r") as file:
-        config = yaml.safe_load(file)
+    config = OmegaConf.load(config_path)
 
     pose_detector = PoseDetector(args.object, config)
     pose_detector.detect_poses()

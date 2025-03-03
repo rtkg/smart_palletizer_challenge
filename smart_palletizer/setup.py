@@ -18,7 +18,6 @@ install_deps = [
     "matplotlib",
     "pillow>=11.1.0",
     "omegaconf",
-    "pyyaml",
     "black",
 ]
 

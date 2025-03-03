@@ -5,6 +5,7 @@ from typing import Tuple
 import cv2
 import open3d as o3d
 import numpy as np
+from omegaconf import DictConfig
 
 
 class PalletizerData:
@@ -12,15 +13,15 @@ class PalletizerData:
     Helper class to load and manage data for the palletizer.
     """
 
-    def __init__(self, config: dict, object: str) -> None:
+    def __init__(self, config: DictConfig, object: str) -> None:
         """
         Initialize the PalletizerData with the given configuration and object.
 
         Args:
-            config (dict): The configuration dictionary.
+            config (DictConfig): The configuration dictionary.
             object (str): The object to load data for (can be 'medium_box' or 'small_box').
         """
-        self.depth_scale = config["depth_scale"]
+        self.depth_scale = config.depth_scale
         current_file_path = os.path.abspath(__file__)
         data_path = os.path.join(os.path.dirname(current_file_path), "../../../data/", object)
 
@@ -57,9 +58,9 @@ class PalletizerData:
         self.object = object
 
         if object == "small_box":
-            self.box_dimensions = config["small_box_dimensions"]  # Use config value
+            self.box_dimensions = config.small_box_dimensions  # Use config value
         elif object == "medium_box":
-            self.box_dimensions = config["medium_box_dimensions"]  # Use config value
+            self.box_dimensions = config.medium_box_dimensions  # Use config value
         else:
             raise ValueError("Invalid object type. Supported objects are 'small_box' and 'medium_box'.")
 
