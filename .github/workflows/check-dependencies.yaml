@@ -22,8 +22,11 @@ jobs:
     
     - name: Install dependencies
       run: |
+        cd smart_palletizer
         python -m pip install --upgrade pip
         pip install -e .
     
     - name: Run setup.py
-      run: python setup.py develop
+      run: |
+        cd smart_palletizer
+        python setup.py develop
