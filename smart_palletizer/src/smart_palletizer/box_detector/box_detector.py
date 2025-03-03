@@ -33,6 +33,7 @@ class BoxDetector:
             object (str): The object to detect boxes for.
             config (DictConfig): The configuration dictionary.
         """
+        # load the data
         self.data = PalletizerData(config.palletizer_data, object)
         self.config = config.box_detector
         self.detected_boxes = None
@@ -44,17 +45,21 @@ class BoxDetector:
         Returns:
             None
         """
+
+        # Run SAM to segment the image
         device = "cuda" if torch.cuda.is_available() else "cpu"
         generator = pipeline("mask-generation", model="facebook/sam-vit-huge", device=device)
-
         color_image_pil = Image.fromarray(cv2.cvtColor(self.data.color_image, cv2.COLOR_BGR2RGB))
         masks = generator(
             color_image_pil, points_per_batch=self.config.points_per_batch, pred_iou_thresh=self.config.pred_iou_thresh
         )
 
+        # Filter the segments to generate box candidate image masks
         box_candidates = self._filter_masks(masks["masks"])
+        # Find boxes in the box candidate image masks
         self.detected_boxes = self._find_boxes(box_candidates)
 
+        # Save the box detections to file
         with open(os.path.join(self.data.data_path, "detected_boxes.pkl"), "wb") as f:
             pickle.dump(self.detected_boxes, f)
 
@@ -73,24 +78,35 @@ class BoxDetector:
         eps = self.config.eps
         fx = self.data.intrinsics[0, 0]
         fy = self.data.intrinsics[1, 1]
+        # Generate all possible 2-combinations of box dimensions to account for the box sides that could be visible
+        # from above
         permutations = list(itertools.permutations(self.data.box_dimensions, 2))
         for box_candidate in box_candidates:
+            # Fit a tight bounding box around the box candidate in the image plane
             contours, _ = cv2.findContours(box_candidate.astype(np.uint8), cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
             bbox_contour = cv2.minAreaRect(contours[0])
             bbox = cv2.boxPoints(bbox_contour)
+
+            # Calculate the width and height of the bounding box
             w = np.linalg.norm(bbox[0] - bbox[1])
             h = np.linalg.norm(bbox[1] - bbox[2])
+
+            # Calculate the median depth value within the box candidate and discard it if it exceeds the depth cutoff
+            # (don't consider patches on the floor)
             z3d = np.median(self.data.depth_image[box_candidate]) * self.data.depth_scale
             if z3d > self.config.depth_cutoff:
                 continue
             for perm in permutations:
-                # camera projection using the intrinsics
+                # Project the box dimensions to the image plane using the camera intrinsics
+                # (assuming strict top-down view)
                 w_box = perm[0] * fx / z3d
                 h_box = perm[1] * fy / z3d
 
+                # Check if the bounding box dimensions are within a certain percentage of the projected box dimensions
                 if abs((w_box - w) / w_box) < eps and abs((h_box - h) / h_box) < eps:
                     detected_boxes.append((box_candidate, bbox.astype(np.int32)))
                     break
+
         return detected_boxes
 
     def visualize_detected_boxes(self) -> None:
@@ -130,10 +146,9 @@ class BoxDetector:
             # filter by containment
             is_contained = False
             for j, mask_j in enumerate(masks):
-                # check if current mask is fully contained in any other mask
                 if i == j:
                     continue
-
+                # check if current mask is fully contained in any other mask. If so, discard it
                 if np.all(mask_j & mask == mask):
                     is_contained = True
                     break

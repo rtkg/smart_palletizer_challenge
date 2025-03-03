@@ -11,7 +11,8 @@ from omegaconf import DictConfig
 
 class PoseDetector:
     """
-    A class to detect poses of objects in an RGB-D image by using ICP given a binary image object mask and a target object point cloud.
+    A class to detect poses of objects in an RGB-D image by using ICP given a binary image object mask and a
+    target object point cloud.
 
     Attributes:
         point_cloud (o3d.geometry.PointCloud): The point cloud created from the RGB-D image.
@@ -36,6 +37,7 @@ class PoseDetector:
         self.detected_poses = None
         self.data = data
         self.config = config
+        # point cloud representing the full scene
         self.point_cloud = self._create_point_cloud(data.width, data.height, data.intrinsics, data.rgbd_image)
 
     def _create_point_cloud(
@@ -47,7 +49,7 @@ class PoseDetector:
         visualize: bool = False,
     ) -> o3d.geometry.PointCloud:
         """
-        Create a point cloud from the RGB-D image and camera intrinsics.
+        Helper method to create a point cloud from the RGB-D image and camera intrinsics.
 
         Args:
             width (int): The width of the image.
@@ -94,9 +96,11 @@ class PoseDetector:
         """
         detected_poses = []
 
+        # iterate through all pre-computed object detection image masks and detect the corresponding poses
         for binary_mask, _ in self.data.detected_boxes:
             detected_poses.append(self._detect_pose(binary_mask))
 
+        # safe the detected poses
         with open(os.path.join(self.data.data_path, "detected_poses.pkl"), "wb") as f:
             pickle.dump(self.detected_poses, f)
 
@@ -127,7 +131,7 @@ class PoseDetector:
             convert_rgb_to_intensity=False,
         )
 
-        # Step 2: Create a point cloud from the masked RGBD image
+        # Step 2: Create a point cloud from the masked RGBD image, filter outliers, detect planes and project points
         masked_pcd = self._create_point_cloud(self.data.width, self.data.height, self.data.intrinsics, masked_rgbd)
         masked_pcd = filter_outliers(masked_pcd, self.config.filter_outliers)
 
@@ -137,13 +141,14 @@ class PoseDetector:
         for plane in planes:
             masked_pcd += plane
 
-        # Step 3: Fit the given box mesh to the point cloud
+        # Step 3: Fit the given box mesh to the processed masked point cloud
         # We'll use ICP (Iterative Closest Point) algorithm for this
         box_pcd = copy.deepcopy(self.data.box_pcd)
-        initial_transformation = np.identity(4)  # Initial transformation estimate
-        # Calculate the mean x, y, z coordinates from the masked point cloud
+        # Initial transformation estimate based on the mean of the masked target point cloud
+        initial_transformation = np.identity(4)
         initial_transformation[0:3, 3] = np.mean(np.asarray(masked_pcd.points), axis=0)
 
+        # Run ICP to find the transformation that aligns the box_pcd with the masked_pcd
         max_correspondence_distance = self.config.pose_detector.max_correspondence_distance
         max_iteration = self.config.pose_detector.max_iteration
         icp_result = o3d.pipelines.registration.registration_icp(
@@ -155,7 +160,7 @@ class PoseDetector:
             criteria=o3d.pipelines.registration.ICPConvergenceCriteria(max_iteration=max_iteration),
         )
 
-        # Apply the transformation to the mesh
+        # Apply the transformation to the box
         box_pcd.transform(icp_result.transformation)
 
         # Visualize the point clouds and coordinate frames
